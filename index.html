@@ -300,13 +300,13 @@
             <article class="countdown-item">
                 <span class="countdown-label">Lage</span>
                 <span class="countdown-value" id="days">--</span>
-                <span class="unit-label">verbleibende Schultage vor Dienstprüfung Tag 1</span>
+                <span class="unit-label">verbleibende Schultage bis einschließlich 23.06.</span>
             </article>
 
             <article class="countdown-item">
                 <span class="countdown-label">Lage gesamt</span>
                 <span class="countdown-value" id="totalDays">--</span>
-                <span class="unit-label">Tage bis 24.06.</span>
+                <span class="unit-label">Kalendertage bis einschließlich 23.06.</span>
             </article>
 
             <div class="precise-countdown" id="preciseCountdown" aria-live="polite"></div>
@@ -441,20 +441,28 @@
             { day: 4, month: 5 }, { day: 5, month: 5 }, { day: 6, month: 5 }, { day: 7, month: 5 },
             { day: 8, month: 5 }, { day: 26, month: 5 }, { day: 27, month: 5 }, { day: 28, month: 5 },
             { day: 29, month: 5 }, { day: 1, month: 6 }, { day: 2, month: 6 }, { day: 3, month: 6 },
-            { day: 22, month: 6 }, { day: 23, month: 6 }, { day: 24, month: 6 }
+            { day: 22, month: 6 }, { day: 23, month: 6 }
         ];
 
-        const lastDayThisYear = () => {
+        const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+        function getLastSchoolDayThisYear() {
+            const now = new Date();
+            return new Date(now.getFullYear(), 5, 23);
+        }
+
+        function getExamDateThisYear() {
             const now = new Date();
             return new Date(now.getFullYear(), 5, 24);
-        };
+        }
 
-        function getTotalDaysUntil2406() {
+        function getCalendarDaysInclusiveUntil2306() {
             const now = new Date();
             const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const lastDay = new Date(now.getFullYear(), 5, 24);
-            if (nowMidnight.getTime() > lastDay.getTime()) return 0;
-            return Math.ceil((lastDay - nowMidnight) / (1000 * 60 * 60 * 24));
+            const examDate = getExamDateThisYear();
+
+            if (nowMidnight.getTime() >= examDate.getTime()) return 0;
+            return Math.ceil((examDate - nowMidnight) / MS_PER_DAY);
         }
 
         const SCHOOL_START = 7 * 60 + 30;
@@ -465,7 +473,7 @@
             const now = new Date();
             const currentYear = now.getFullYear();
             const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const lastDay = lastDayThisYear();
+            const lastDay = getLastSchoolDayThisYear();
 
             if (nowMidnight.getTime() > lastDay.getTime()) return 0;
 
@@ -500,19 +508,21 @@
         function getRemainingDays() {
             const now = new Date();
             const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const lastDay = lastDayThisYear();
+            const lastDay = getLastSchoolDayThisYear();
 
             if (nowMidnight.getTime() > lastDay.getTime()) {
                 return 0;
             }
 
             const currentYear = now.getFullYear();
+            const totalCountdownDays = COUNTDOWN_DATES.length;
+
             for (let i = 0; i < COUNTDOWN_DATES.length; i++) {
                 const d = COUNTDOWN_DATES[i];
                 const dateThisYear = new Date(currentYear, d.month - 1, d.day);
                 dateThisYear.setHours(0, 0, 0, 0);
                 if (dateThisYear.getTime() === nowMidnight.getTime()) {
-                    return (i === COUNTDOWN_DATES.length - 1) ? 0 : 35 - i;
+                    return totalCountdownDays - i;
                 }
             }
 
@@ -528,7 +538,7 @@
             }
 
             if (nextIndex >= 0) {
-                return 35 - nextIndex;
+                return totalCountdownDays - nextIndex;
             }
 
             return 0;
@@ -560,7 +570,7 @@
             daysEl.style.color = intensityColor;
 
             const totalDaysEl = document.getElementById('totalDays');
-            const totalDays = getTotalDaysUntil2406();
+            const totalDays = getCalendarDaysInclusiveUntil2306();
             totalDaysEl.textContent = totalDays;
             totalDaysEl.style.color = intensityColor;
 
